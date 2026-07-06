@@ -1,0 +1,18 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: beep-auth
+  namespace: beep-auth-development
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: beep-auth-development-1.faro.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: beep-auth
+                port:
+                  number: 80
