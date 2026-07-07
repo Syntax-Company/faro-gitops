@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: beep-auth
-          image: faro-registry:5000/beep-auth:master-v0.0.0
+          image: 104.248.9.67:5000/beep-auth:master-v0.0.1
           ports:
             - containerPort: 8080
           resources:
@@ -25,5 +25,51 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              valueFrom:
+                configMapKeyRef:
+                  name: beep-auth-development-config
+                  key: SPRING__PROFILES__ACTIVE
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: beep-auth-development-secrets
+                  key: JWT__SECRET
+            - name: API_KEY_EXTERNAL
+              valueFrom:
+                secretKeyRef:
+                  name: beep-auth-development-secrets
+                  key: API__KEY__EXTERNAL
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: beep-auth-development-secrets
+                  key: DB__URL
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: beep-auth-development-secrets
+                  key: DB__USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: beep-auth-development-secrets
+                  key: DB__PASSWORD
+            - name: MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: beep-auth-development-secrets
+                  key: MAIL__USERNAME
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: beep-auth-development-secrets
+                  key: MAIL__PASSWORD
+            - name: API_KEY_INTERNAL
+              valueFrom:
+                secretKeyRef:
+                  name: beep-auth-development-secrets
+                  key: API__KEY__INTERNAL
   strategy:
     canary: {}
