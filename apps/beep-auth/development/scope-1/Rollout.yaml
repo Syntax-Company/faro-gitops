@@ -41,6 +41,11 @@ spec:
                 configMapKeyRef:
                   name: beep-auth-development-config
                   key: CLOUD__AWS__REGION__STATIC
+            - name: CLOUD_AWS_REGION_AUTO
+              valueFrom:
+                configMapKeyRef:
+                  name: beep-auth-development-config
+                  key: CLOUD__AWS__REGION__AUTO
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -81,5 +86,15 @@ spec:
                 secretKeyRef:
                   name: beep-auth-development-secrets
                   key: API__KEY__INTERNAL
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: beep-auth-development-secrets
+                  key: AWS__ACCESS__KEY__ID
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: beep-auth-development-secrets
+                  key: AWS__SECRET__ACCESS__KEY
   strategy:
     canary: {}
