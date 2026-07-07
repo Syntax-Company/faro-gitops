@@ -7,3 +7,4 @@ data:
   SPRING__PROFILES__ACTIVE: "prod"
   AWS__REGION: "sa-east-1"
   CLOUD__AWS__REGION__STATIC: "sa-east-1"
+  CLOUD__AWS__REGION__AUTO: "false"
