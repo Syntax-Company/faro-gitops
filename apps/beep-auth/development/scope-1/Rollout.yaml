@@ -31,6 +31,16 @@ spec:
                 configMapKeyRef:
                   name: beep-auth-development-config
                   key: SPRING__PROFILES__ACTIVE
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: beep-auth-development-config
+                  key: AWS__REGION
+            - name: CLOUD_AWS_REGION_STATIC
+              valueFrom:
+                configMapKeyRef:
+                  name: beep-auth-development-config
+                  key: CLOUD__AWS__REGION__STATIC
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
