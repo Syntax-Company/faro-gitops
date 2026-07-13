@@ -3,8 +3,14 @@ kind: Ingress
 metadata:
   name: faro-landing
   namespace: faro-landing-development
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-staging
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts:
+        - faro-landing-development-1.faro.run
+      secretName: faro-landing-development-1-tls
   rules:
     - host: faro-landing-development-1.faro.run
       http:
