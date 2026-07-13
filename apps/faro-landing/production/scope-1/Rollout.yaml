@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: faro-landing
+  namespace: faro-landing-production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: faro-landing
+  template:
+    metadata:
+      labels:
+        app: faro-landing
+    spec:
+      containers:
+        - name: faro-landing
+          image: 104.248.9.67:5000/faro-landing:v0.1.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+              ephemeral-storage: 1Gi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+  strategy:
+    canary: {}
