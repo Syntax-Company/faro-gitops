@@ -4,7 +4,7 @@ metadata:
   name: faro-landing
   namespace: faro-landing-development
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-staging
+    cert-manager.io/cluster-issuer: letsencrypt-prod
 spec:
   ingressClassName: traefik
   tls:
