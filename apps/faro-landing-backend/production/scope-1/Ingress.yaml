@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: faro-landing-backend
+  namespace: faro-landing-backend-production
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - faro-landing-backend-production-1.faro.run
+      secretName: faro-landing-backend-production-1-tls
+  rules:
+    - host: faro-landing-backend-production-1.faro.run
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: faro-landing-backend
+                port:
+                  number: 80

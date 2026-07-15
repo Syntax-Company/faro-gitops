@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: faro-landing-backend
+  namespace: faro-landing-backend-production
+spec:
+  selector:
+    app: faro-landing-backend
+  ports:
+    - port: 80
+      targetPort: 8080
