@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: faro-landing
-          image: 104.248.9.67:5000/faro-landing:v0.1.7
+          image: 104.248.9.67:5000/faro-landing:v0.1.8
           ports:
             - containerPort: 8080
           resources:
