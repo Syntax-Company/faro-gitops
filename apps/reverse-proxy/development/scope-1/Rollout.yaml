@@ -26,5 +26,12 @@ spec:
             limits:
               cpu: 500m
               memory: 512Mi
+      nodeSelector:
+        workload: "mitcr-apps"
+      tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "mitcr-apps"
+          effect: "NoSchedule"
   strategy:
     canary: {}
