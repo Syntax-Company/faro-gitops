@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: reverse-proxy
+  namespace: reverse-proxy-development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reverse-proxy
+  template:
+    metadata:
+      labels:
+        app: reverse-proxy
+    spec:
+      containers:
+        - name: reverse-proxy
+          image: 104.248.9.67:5000/reverse-proxy:master-3c8639d-v.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+              ephemeral-storage: 1Gi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+  strategy:
+    canary: {}

@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: reverse-proxy
+  namespace: reverse-proxy-development
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/secret-template: '{"labels":{"app.kubernetes.io/managed-by":"faro"}}'
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - reverse-proxy-development-1.faro.run
+      secretName: reverse-proxy-development-1-tls
+  rules:
+    - host: reverse-proxy-development-1.faro.run
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: reverse-proxy
+                port:
+                  number: 80

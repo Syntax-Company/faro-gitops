@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: reverse-proxy
+  namespace: reverse-proxy-development
+  labels:
+    app.kubernetes.io/managed-by: faro
+    app: reverse-proxy
+spec:
+  selector:
+    app: reverse-proxy
+  ports:
+    - port: 80
+      targetPort: 8080
