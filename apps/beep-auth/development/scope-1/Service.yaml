@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: beep-auth
+  namespace: beep-auth-development
+  labels:
+    app.kubernetes.io/managed-by: faro
+    app: beep-auth
+spec:
+  selector:
+    app: beep-auth
+  ports:
+    - port: 80
+      targetPort: 8080
