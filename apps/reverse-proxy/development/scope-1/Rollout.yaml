@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: reverse-proxy
-          image: 104.248.9.67:5000/reverse-proxy:master-c5d295b-v.5
+          image: 104.248.9.67:5000/reverse-proxy:master-f047fe8-v.6
           ports:
             - containerPort: 8080
           resources:
