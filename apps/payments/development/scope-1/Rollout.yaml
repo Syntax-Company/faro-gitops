@@ -1,0 +1,101 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: payments
+  namespace: payments-development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments
+  template:
+    metadata:
+      labels:
+        app: payments
+    spec:
+      containers:
+        - name: payments
+          image: 104.248.9.67:5000/payments:master-d657239-v.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+              ephemeral-storage: 1Gi
+            limits:
+              cpu: 1
+              memory: 1Gi
+          env:
+            - name: WOMPI_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-development-config
+                  key: WOMPI__URL
+            - name: SPRING_PROFILES_ACTIVE
+              valueFrom:
+                configMapKeyRef:
+                  name: payments-development-config
+                  key: SPRING__PROFILES__ACTIVE
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: JWT__SECRET
+            - name: API_KEY_INTERNAL
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: API__KEY__INTERNAL
+            - name: API_KEY_EXTERNAL
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: API__KEY__EXTERNAL
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: DB__URL
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: DB__USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: DB__PASSWORD
+            - name: MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: MAIL__USERNAME
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: MAIL__PASSWORD
+            - name: WOMPI_PUBLIC_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: WOMPI__PUBLIC__KEY
+            - name: WOMPI_PRIVATE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: WOMPI__PRIVATE__KEY
+            - name: WOMPI_EVENT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: WOMPI__EVENT__KEY
+            - name: WOMPI_INTEGRITY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: payments-development-secrets
+                  key: WOMPI__INTEGRITY__KEY
+  strategy:
+    canary: {}
