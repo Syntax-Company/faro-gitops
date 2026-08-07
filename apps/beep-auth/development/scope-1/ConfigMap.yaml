@@ -4,4 +4,4 @@ metadata:
   name: beep-auth-development-config
   namespace: beep-auth-development
 data:
-  SPRING__PROFILE__ACTIVE: "prod"
+  SPRING__PROFILES__ACTIVE: "prod"
