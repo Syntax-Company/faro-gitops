@@ -97,5 +97,12 @@ spec:
                 secretKeyRef:
                   name: payments-development-secrets
                   key: WOMPI__INTEGRITY__KEY
+      nodeSelector:
+        workload: "mitcr-apps"
+      tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "mitcr-apps"
+          effect: "NoSchedule"
   strategy:
     canary: {}
