@@ -32,6 +32,46 @@ spec:
                 configMapKeyRef:
                   name: beep-business-development-config
                   key: SPRING__PROFILES__ACTIVE
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: beep-business-development-secrets
+                  key: JWT__SECRET
+            - name: API_KEY_INTERNAL
+              valueFrom:
+                secretKeyRef:
+                  name: beep-business-development-secrets
+                  key: API__KEY__INTERNAL
+            - name: API_KEY_EXTERNAL
+              valueFrom:
+                secretKeyRef:
+                  name: beep-business-development-secrets
+                  key: API__KEY__EXTERNAL
+            - name: DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: beep-business-development-secrets
+                  key: DB__URL
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: beep-business-development-secrets
+                  key: DB__USERNAME
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: beep-business-development-secrets
+                  key: DB__PASSWORD
+            - name: MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: beep-business-development-secrets
+                  key: MAIL__USERNAME
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: beep-business-development-secrets
+                  key: MAIL__PASSWORD
       nodeSelector:
         workload: "mitcr-apps"
       tolerations:
