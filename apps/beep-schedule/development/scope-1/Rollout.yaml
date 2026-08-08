@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: beep-schedule
-          image: 104.248.9.67:5000/beep-schedule:master-00882bd-v.0
+          image: 104.248.9.67:5000/beep-schedule:master-346d0fb-v.1
           ports:
             - containerPort: 8080
           resources:
