@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: beep-business
+  namespace: beep-business-development
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beep-business
+  template:
+    metadata:
+      labels:
+        app: beep-business
+    spec:
+      containers:
+        - name: beep-business
+          image: 104.248.9.67:5000/beep-business:master-7b593c8-v.0
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+              ephemeral-storage: 1Gi
+            limits:
+              cpu: 1
+              memory: 1Gi
+      nodeSelector:
+        workload: "mitcr-apps"
+      tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "mitcr-apps"
+          effect: "NoSchedule"
+  strategy:
+    canary: {}
