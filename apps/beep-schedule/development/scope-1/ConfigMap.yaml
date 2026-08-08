@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: beep-schedule-development-config
+  namespace: beep-schedule-development
+data:
+  SPRING__PROFILES__ACTIVE: "prod"
