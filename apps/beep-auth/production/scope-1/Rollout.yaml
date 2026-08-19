@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: beep-auth
+  namespace: beep-auth-production
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beep-auth
+  template:
+    metadata:
+      labels:
+        app: beep-auth
+    spec:
+      containers:
+        - name: beep-auth
+          image: 104.248.9.67:5000/beep-auth:v1.0.3
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 1
+              memory: 2Gi
+              ephemeral-storage: 2Gi
+            limits:
+              cpu: 4
+              memory: 4Gi
+      nodeSelector:
+        kubernetes.io/hostname: "mitcr-apps"
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "mitcr"
+          effect: "NoSchedule"
+  strategy:
+    canary: {}
