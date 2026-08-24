@@ -72,5 +72,12 @@ spec:
                 secretKeyRef:
                   name: beep-auth-development-secrets
                   key: MAIL__PASSWORD
+      nodeSelector:
+        kubernetes.io/hostname: "mitcr-apps"
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "mitcr"
+          effect: "NoSchedule"
   strategy:
     canary: {}
