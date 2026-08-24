@@ -27,11 +27,11 @@ spec:
               cpu: 4
               memory: 4Gi
           env:
-            - name: SPRING_ACTIVE_PROFILES
+            - name: SPRING_PROFILES_ACTIVE
               valueFrom:
                 configMapKeyRef:
                   name: beep-auth-development-config
-                  key: SPRING__ACTIVE__PROFILES
+                  key: SPRING__PROFILES__ACTIVE
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
