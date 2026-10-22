@@ -3,15 +3,8 @@ kind: Ingress
 metadata:
   name: faro-landing
   namespace: faro-landing-development
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    cert-manager.io/secret-template: '{"labels":{"app.kubernetes.io/managed-by":"faro"}}'
 spec:
   ingressClassName: traefik
-  tls:
-    - hosts:
-        - faro-landing-development-1.faro.localtest.me
-      secretName: faro-landing-development-1-tls
   rules:
     - host: faro-landing-development-1.faro.localtest.me
       http:
