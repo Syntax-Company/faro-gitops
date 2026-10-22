@@ -10,10 +10,10 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - faro-landing-development-1.faro.run
+        - faro-landing-development-1.faro.localtest.me
       secretName: faro-landing-development-1-tls
   rules:
-    - host: faro-landing-development-1.faro.run
+    - host: faro-landing-development-1.faro.localtest.me
       http:
         paths:
           - path: /
