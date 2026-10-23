@@ -1,0 +1,195 @@
+# Generado por faro-observability para el cluster a0f08d5c-ba26-40e3-aec2-b47ee2f59f85 y commiteado por el core (etapa 1.3).
+# No editar a mano: el core lo reescribe en cada reconciliación.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vmagent
+  namespace: faro-observability
+  labels:
+    app.kubernetes.io/part-of: faro-observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: faro-observability-vmagent
+  labels:
+    app.kubernetes.io/part-of: faro-observability
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "nodes"]
+    verbs: ["get", "list", "watch"]
+  # cAdvisor del kubelet, leído a través del proxy del API server (CPU y memoria de los contenedores).
+  - apiGroups: [""]
+    resources: ["nodes/proxy", "nodes/metrics"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: faro-observability-vmagent
+  labels:
+    app.kubernetes.io/part-of: faro-observability
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: faro-observability-vmagent
+subjects:
+  - kind: ServiceAccount
+    name: vmagent
+    namespace: faro-observability
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vmagent-config
+  namespace: faro-observability
+  labels:
+    app.kubernetes.io/part-of: faro-observability
+data:
+  scrape.yml: |
+    global:
+      scrape_interval: 30s
+    scrape_configs:
+      # Traefik (IngressClass con controller traefik.io/ingress-controller), métricas Prometheus en su puerto
+      # `metrics`. honor_labels: true -> `service` es el de la MÉTRICA (la app), no el del pod de Traefik.
+      # ⚠️ Traefik solo emite las series por servicio con `metrics.prometheus.addServicesLabels: true`.
+      - job_name: ingress-traefik
+        honor_labels: true
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            regex: traefik
+            action: keep
+          # El rol `pod` crea un target por CADA puerto del contenedor: solo el puerto `metrics`.
+          - source_labels: [__meta_kubernetes_pod_container_port_name]
+            regex: metrics
+            action: keep
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            regex: traefik_service_requests_total|traefik_service_request_duration_seconds_bucket|traefik_service_requests_bytes_total|traefik_service_responses_bytes_total
+            action: keep
+
+      # cAdvisor del kubelet de cada nodo (saturación: CPU y memoria de los contenedores frente a su límite),
+      # a través del proxy del API server para no depender de llegar al puerto 10250 de cada nodo.
+      # Solo se guardan las 5 series que usa el addon: cAdvisor expone cientos.
+      - job_name: kubelet-cadvisor
+        # Cada 15 s: la CPU es la señal que tiene que avisar rápido, y la ventana de rate() de 1 min tiene
+        # ~4 muestras. cAdvisor actualiza sus contadores cada 10–15 s: más rápido no sirve.
+        scrape_interval: 15s
+        # ⚠️ cAdvisor sirve la medición de su último ciclo con la hora REAL en que la tomó. vmagent ignora
+        # esa hora por defecto y usa la del scrape: un pod pegado a su cuota se vería al ~117 %.
+        honor_timestamps: true
+        scheme: https
+        tls_config:
+          ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+        kubernetes_sd_configs:
+          - role: node
+        relabel_configs:
+          - target_label: __address__
+            replacement: kubernetes.default.svc:443
+          - source_labels: [__meta_kubernetes_node_name]
+            target_label: __metrics_path__
+            replacement: /api/v1/nodes/$1/proxy/metrics/cadvisor
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            regex: container_cpu_usage_seconds_total|container_memory_working_set_bytes|container_spec_cpu_quota|container_spec_cpu_period|container_spec_memory_limit_bytes
+            action: keep
+          # Sin el cgroup del pod entero (container="") ni el contenedor pausa: solo los contenedores de la app.
+          - source_labels: [container]
+            regex: "|POD"
+            action: drop
+
+      # Réplicas disponibles y deseadas de cada Rollout, desde el controller de Argo Rollouts.
+      # honor_labels: true -> `namespace` y `name` son los del Rollout (la app), no los del controller.
+      - job_name: argo-rollouts
+        honor_labels: true
+        kubernetes_sd_configs:
+          - role: pod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
+            regex: argo-rollouts
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_container_port_name]
+            regex: metrics
+            action: keep
+        metric_relabel_configs:
+          - source_labels: [__name__]
+            regex: rollout_info_replicas_available|rollout_info_replicas_desired
+            action: keep
+
+      # Reinicios y motivo de la última terminación de cada contenedor (kube-state-metrics.yaml).
+      # honor_labels: true -> `namespace` y `pod` son los del pod medido, no los de kube-state-metrics.
+      - job_name: kube-state-metrics
+        honor_labels: true
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [faro-observability]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: kube-state-metrics
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_container_port_name]
+            regex: http-metrics
+            action: keep
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vmagent
+  namespace: faro-observability
+  labels:
+    app.kubernetes.io/part-of: faro-observability
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vmagent
+  template:
+    metadata:
+      labels:
+        app: vmagent
+    spec:
+      serviceAccountName: vmagent
+      containers:
+        - name: vmagent
+          image: victoriametrics/vmagent:v1.153.0
+          args:
+            - -promscrape.config=/config/scrape.yml
+            # Relee el ConfigMap sin reiniciar el pod cuando el addon cambia el scrape.
+            - -promscrape.configCheckInterval=30s
+            - -remoteWrite.url=http://vmauth.faro-observability.svc:8427/api/v1/write
+            # Token de escritura del cluster: el core lo pone DIRECTO en el cluster, nunca en git.
+            - -remoteWrite.bearerTokenFile=/remote-write/token
+            # vmauth fija la etiqueta `cluster` del lado servidor; esta solo la hace visible en el agente.
+            - -remoteWrite.label=cluster=a0f08d5c-ba26-40e3-aec2-b47ee2f59f85
+            # Buffer en disco: si se corta la red hacia Faro (o VictoriaMetrics reinicia por un cambio de
+            # retención), las muestras esperan aquí y se envían al volver.
+            - -remoteWrite.tmpDataPath=/buffer
+            - -remoteWrite.maxDiskUsagePerURL=900MB
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: remote-write
+              mountPath: /remote-write
+              readOnly: true
+            - name: buffer
+              mountPath: /buffer
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: config
+          configMap:
+            name: vmagent-config
+        - name: remote-write
+          secret:
+            secretName: vmagent-remote-write
+        - name: buffer
+          emptyDir:
+            sizeLimit: 1Gi
