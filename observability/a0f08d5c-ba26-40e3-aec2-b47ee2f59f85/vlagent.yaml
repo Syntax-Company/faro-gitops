@@ -1,0 +1,117 @@
+# Generado por faro-observability para el cluster a0f08d5c-ba26-40e3-aec2-b47ee2f59f85 y commiteado por el core (plan 002, etapa 2.2).
+# No editar a mano: el core lo reescribe en cada reconciliación.
+#
+# vlagent en cada nodo: lee los logs de los contenedores de /var/log/pods y los manda a VictoriaLogs por vmauth,
+# con el mismo token de escritura del vmagent.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: vlagent
+  namespace: faro-observability
+  labels:
+    app.kubernetes.io/part-of: faro-observability
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: faro-observability-vlagent
+  labels:
+    app.kubernetes.io/part-of: faro-observability
+rules:
+  # Metadatos de cada línea (pod, namespace, etiquetas como `app` y `process`).
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get"]
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: faro-observability-vlagent
+  labels:
+    app.kubernetes.io/part-of: faro-observability
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: faro-observability-vlagent
+subjects:
+  - kind: ServiceAccount
+    name: vlagent
+    namespace: faro-observability
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: vlagent
+  namespace: faro-observability
+  labels:
+    app.kubernetes.io/part-of: faro-observability
+spec:
+  selector:
+    matchLabels:
+      app: vlagent
+  template:
+    metadata:
+      labels:
+        app: vlagent
+    spec:
+      serviceAccountName: vlagent
+      # En TODOS los nodos, también los del control plane: si una app corre ahí, sus logs también cuentan.
+      tolerations:
+        - operator: Exists
+      containers:
+        - name: vlagent
+          image: victoriametrics/vlagent:v1.53.0
+          args:
+            - -kubernetesCollector
+            - -remoteWrite.url=http://vmauth.faro-observability.svc:8427/insert/native
+            # Token de escritura del cluster: el mismo Secret del vmagent, que el core pone DIRECTO en el cluster.
+            - -remoteWrite.bearerTokenFile=/remote-write/token
+            # vmauth fija `cluster` del lado servidor (extra_fields); este solo lo hace visible en el agente.
+            - '-kubernetesCollector.extraFields={"cluster":"a0f08d5c-ba26-40e3-aec2-b47ee2f59f85"}'
+            # Solo los logs que Faro muestra: pods con la etiqueta `app` fuera de los namespaces del sistema. El
+            # filtro corre ANTES de leer los archivos: lo excluido no gasta CPU, disco ni red.
+            - '-kubernetesCollector.excludeFilter=kubernetes.pod_namespace:in(kube-system, kube-public, kube-node-lease, faro-observability, argocd, argo-rollouts) or NOT kubernetes.pod_labels.app:*'
+            # Checkpoints y buffer en el disco del nodo: sobreviven a un reinicio del pod (no reenvía ni pierde
+            # líneas). Si se corta la red hacia Faro o VictoriaLogs reinicia por un cambio de retención, los logs
+            # esperan aquí; el tope evita llenar el disco del nodo (al llegar, descarta los más viejos).
+            - -tmpDataPath=/var/lib/vlagent
+            - -remoteWrite.maxDiskUsagePerURL=900MB
+          # Root solo para LEER /var/log/pods (archivos de root); sin capacidades y con /var/log en solo lectura.
+          securityContext:
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+            - name: data
+              mountPath: /var/lib/vlagent
+            - name: remote-write
+              mountPath: /remote-write
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
+      volumes:
+        - name: varlog
+          hostPath:
+            path: /var/log
+        - name: data
+          hostPath:
+            path: /var/lib/vlagent
+            type: DirectoryOrCreate
+        - name: remote-write
+          secret:
+            secretName: vmagent-remote-write
